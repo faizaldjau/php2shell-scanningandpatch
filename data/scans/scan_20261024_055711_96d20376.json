@@ -1,0 +1,108 @@
+{
+    "scan_id": "scan_20261024_055711_96d20376",
+    "status": "completed",
+    "created_at": "2026-10-24T05:57:11Z",
+    "total_hosts": 1,
+    "processed_hosts": 1,
+    "progress": 100,
+    "current_host": "",
+    "options": {
+        "sapi": "auto",
+        "timeout": 30,
+        "path": ""
+    },
+    "hosts": [
+        "http:\/\/localhost\/proj-php2shell\/"
+    ],
+    "results": [
+        {
+            "success": true,
+            "target": "http:\/\/localhost\/proj-php2shell\/",
+            "overall_risk": "CRITICAL",
+            "php2shell": {
+                "vulnerable": true,
+                "reason": "Target menunjukkan anomali memory crash \/ vulnerable",
+                "evidence": "[VULNERABLE] http:\/\/localhost\/proj-php2shell\/ - Status: 200 - SAPI: mod_php\/PHP-FPM - Verdict: VULNERABLE\r\n"
+            },
+            "owasp": {
+                "target": "http:\/\/localhost\/proj-php2shell\/",
+                "timestamp": "2026-10-24T05:57:20Z",
+                "score": 0,
+                "grade": "F",
+                "findings": [
+                    {
+                        "category": "A02: Cryptographic Failures",
+                        "severity": "HIGH",
+                        "title": "Unencrypted HTTP Connection",
+                        "desc": "Situs melayani trafik tanpa enkripsi HTTPS. Data kredensial dan sesi perkara dapat disadap.",
+                        "remediation": "Pasang sertifikat TLS\/SSL (misal Let's Encrypt) dan lakukan redirect 301 dari HTTP ke HTTPS."
+                    },
+                    {
+                        "category": "A05: Security Misconfiguration",
+                        "severity": "MEDIUM",
+                        "title": "Missing Content Security Policy (CSP)",
+                        "desc": "Header Content-Security-Policy tidak terpasang. CSP sangat efektif meredam serangan XSS dan data injection.",
+                        "remediation": "Terapkan minimal: Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none';"
+                    },
+                    {
+                        "category": "A05: Security Misconfiguration",
+                        "severity": "MEDIUM",
+                        "title": "Missing X-Frame-Options Header",
+                        "desc": "Header X-Frame-Options tidak aktif, memungkinkan halaman SIPP di-embed ke dalam iframe situs jahat (Clickjacking).",
+                        "remediation": "Tambahkan header: X-Frame-Options: SAMEORIGIN"
+                    },
+                    {
+                        "category": "A05: Security Misconfiguration",
+                        "severity": "LOW",
+                        "title": "Missing X-Content-Type-Options (nosniff)",
+                        "desc": "Browser dapat melakukan MIME-sniffing terhadap berkas unggahan, membuka celah eksekusi skrip.",
+                        "remediation": "Tambahkan header: X-Content-Type-Options: nosniff"
+                    },
+                    {
+                        "category": "A05: Security Misconfiguration",
+                        "severity": "LOW",
+                        "title": "Missing Referrer-Policy Header",
+                        "desc": "URL lengkap beserta parameter sensitif dapat bocor ke situs eksternal saat navigasi keluar.",
+                        "remediation": "Tambahkan header: Referrer-Policy: strict-origin-when-cross-origin"
+                    },
+                    {
+                        "category": "A05: Security Misconfiguration",
+                        "severity": "HIGH",
+                        "title": "Information Disclosure: X-Powered-By Exposed",
+                        "desc": "Header membocorkan versi teknologi: \"PHP\/8.3.30\". Ini mempermudah penyerang memetakan sasaran PHP2Shell.",
+                        "remediation": "Di php.ini, ubah parameter: expose_php = Off"
+                    },
+                    {
+                        "category": "A05: Security Misconfiguration",
+                        "severity": "MEDIUM",
+                        "title": "Information Disclosure: Detailed Server Version in Header",
+                        "desc": "Header Server membocorkan versi spesifik perangkat lunak: \"Apache\/2.4.66 (Win64) OpenSSL\/3.0.18 PHP\/8.3.30\".",
+                        "remediation": "Apache: ServerTokens Prod, ServerSignature Off. Nginx: server_tokens off;"
+                    },
+                    {
+                        "category": "A05: Security Misconfiguration",
+                        "severity": "HIGH",
+                        "title": "Dangerous HTTP Method Allowed: TRACE (Cross-Site Tracing)",
+                        "desc": "Metode HTTP TRACE aktif di web server. Hal ini memungkinkan penyerang mencuri kredensial cookie HttpOnly melalui teknik XST.",
+                        "remediation": "Apache: TraceEnable Off. Nginx: Batasi metode hanya GET, POST, HEAD."
+                    }
+                ],
+                "headers_analyzed": {
+                    "date": "Sat, 24 Oct 2026 05:57:20 GMT",
+                    "server": "Apache\/2.4.66 (Win64) OpenSSL\/3.0.18 PHP\/8.3.30",
+                    "x-powered-by": "PHP\/8.3.30",
+                    "transfer-encoding": "chunked",
+                    "content-type": "text\/html; charset=UTF-8"
+                },
+                "cookies_analyzed": [],
+                "methods_allowed": [
+                    "TRACE"
+                ],
+                "sensitive_files": [],
+                "success": true
+            },
+            "scanned_at": "2026-10-24T05:57:20Z"
+        }
+    ],
+    "error": null
+}

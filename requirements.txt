@@ -1,0 +1,4 @@
+# Python Dependencies for Proj-PHP2Shell Audit & Hardening Platform
+h11>=0.14.0
+tqdm>=4.64.0
+paramiko>=3.0.0
