@@ -66,6 +66,18 @@
                         <textarea name="private_key" rows="2" placeholder="-----BEGIN RSA/OPENSSH PRIVATE KEY-----" class="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-[10px] text-slate-300 font-mono placeholder-slate-700 focus:outline-none focus:border-emerald-500 shadow-inner transition"></textarea>
                     </div>
 
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Zona Waktu Pengadilan (date.timezone)</label>
+                        <select name="timezone" id="ssh-timezone-select" class="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-sans shadow-inner transition">
+                            <option value="">-- Pertahankan Pengaturan Server Saat Ini --</option>
+                            <option value="Asia/Makassar">Asia/Makassar (WITA — Gorontalo, Sulsel, Bali, NTB, NTT, Kaltim, Kaltara)</option>
+                            <option value="Asia/Jakarta">Asia/Jakarta (WIB — Jawa, Sumatera, Kalbar, Kalteng)</option>
+                            <option value="Asia/Jayapura">Asia/Jayapura (WIT — Maluku, Papua)</option>
+                            <option value="UTC">UTC (Standar Internasional)</option>
+                        </select>
+                        <p class="text-[10px] text-slate-500 mt-1">Pilih sesuai wilayah hukum satker Anda jika ingin disetel saat Hardening/Patch.</p>
+                    </div>
+
                     <div class="pt-2">
                         <button type="submit" id="btn-ssh-audit" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-lg glow-emerald flex items-center justify-center space-x-2 transition hover-lift">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
@@ -120,7 +132,7 @@
                     <div id="ssh-comp-content" class="text-xs leading-relaxed space-y-1.5"></div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3.5 text-xs">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5 text-xs">
                     <div class="p-3 bg-black/40 rounded-xl border border-white/5">
                         <span class="text-slate-400 block text-[10px] uppercase font-semibold">Biner PHP Aktif</span>
                         <span id="ssh-res-php" class="font-mono text-white font-bold text-xs truncate block mt-0.5">Memuat...</span>
@@ -130,12 +142,20 @@
                         <div id="ssh-res-mari-status" class="mt-0.5">Memuat...</div>
                     </div>
                     <div class="p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-slate-400 block text-[10px] uppercase font-semibold">Zona Waktu (date.timezone)</span>
+                        <div id="ssh-res-timezone" class="mt-0.5">Memuat...</div>
+                    </div>
+                    <div class="p-3 bg-black/40 rounded-xl border border-white/5">
                         <span class="text-slate-400 block text-[10px] uppercase font-semibold">session.upload_progress</span>
                         <div id="ssh-res-upload-progress" class="mt-1">Memuat...</div>
                     </div>
                     <div class="p-3 bg-black/40 rounded-xl border border-white/5">
                         <span class="text-slate-400 block text-[10px] uppercase font-semibold">max_input_nesting_level</span>
                         <div id="ssh-res-nesting" class="font-mono text-xs font-bold mt-1">Memuat...</div>
+                    </div>
+                    <div class="p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-slate-400 block text-[10px] uppercase font-semibold">Layanan Web / FPM Aktif</span>
+                        <div id="ssh-res-services" class="font-mono text-cyan-300 text-xs font-bold truncate mt-1">Memuat...</div>
                     </div>
                 </div>
 
@@ -169,11 +189,6 @@
                     <div id="cve-cond-notes" class="text-[11px] text-slate-400 leading-relaxed pt-1 border-t border-white/5">
                         Menunggu data audit internal...
                     </div>
-                </div>
-
-                <div class="p-3 bg-black/40 rounded-xl border border-white/5 flex items-center justify-between">
-                    <span class="text-slate-400 text-[11px]">Layanan Web / FPM Aktif:</span>
-                    <span id="ssh-res-services" class="font-mono text-cyan-300 text-xs font-bold">Memuat...</span>
                 </div>
 
                 <!-- Multi-Action Bar for Remediation & Compromise Assessment -->

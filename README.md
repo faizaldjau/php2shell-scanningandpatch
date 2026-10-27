@@ -42,7 +42,12 @@ Platform ini dioptimalkan khusus untuk lingkungan infrastruktur peradilan di Ind
      * Memindai log web server terhadap tanda kegagalan deserialisasi: `Failed to decode session object` / `Session object destruction failed`.
      * Memindai berkas skrip PHP liar di direktori upload berkas perkara SIPP tanpa menghasilkan *false positive* pada berkas core CodeIgniter / WordPress.
      * Memindai persistensi backdoor di cron jobs (`/var/spool/cron`, `/etc/cron*`).
-   * **Kunci Konfigurasi php.ini:** Mematikan `session.upload_progress.enabled = Off`, mengunci `max_input_nesting_level = 16`, serta mematikan `display_errors` dan `expose_php`.
+   * **Kunci Konfigurasi php.ini & Zona Waktu Peradilan (date.timezone):**
+     * Mematikan `session.upload_progress.enabled = Off`, mengunci `max_input_nesting_level = 16`, serta mematikan `display_errors` dan `expose_php`.
+     * **Pengecekan & Dropdown Zona Waktu MA-RI:** Menyediakan pilihan dropdown zona waktu hukum pengadilan (`Asia/Makassar` untuk WITA, `Asia/Jakarta` untuk WIB, `Asia/Jayapura` untuk WIT, atau `UTC / Pertahankan`) yang dapat diterapkan saat Hardening/Patch, serta kartu telemetri kepatuhan `date.timezone` untuk menjamin integritas jam perkara SIPP & e-Court.
+   * **Konektivitas SSH Andal (PuTTY-Parity & Zero-Key-Leak):**
+     * Mengisolasi otentikasi password dengan `look_for_keys=False` dan `allow_agent=False` agar tidak terjadi benturan dengan kunci privat lokal Windows (`.ssh/id_ed25519`).
+     * Mendukung *fallback* otomatis ke mode *Keyboard-Interactive* (PAM) yang kompatibel penuh dengan OpenSSH versi modern (`OpenSSH 10.2p1`).
    * **Zero-Persistence Privacy:** Password SSH, private key, dan sudo credentials ditransmisikan via pipa memori proses (STDIN) dan tidak pernah disimpan ke database atau disk lokal.
 
 3. **Perisai Konfigurasi & Generator Skrip Mitigasi (Tab 3):**

@@ -166,6 +166,34 @@ def run_audit(client, sudo_pwd=None):
 
     data["cve_2026_115560"] = cve_115560
 
+    # 4c. Audit date.timezone for Mahkamah Agung RI Compliance (SIPP / e-Court Standard)
+    code_tz, out_tz, _ = execute_cmd(client, "php -r 'echo ini_get(\"date.timezone\");' 2>/dev/null")
+    tz_val = out_tz.strip()
+    if not tz_val:
+        code_tz2, out_tz2, _ = execute_cmd(client, "php -i 2>/dev/null | grep -i '^date.timezone'")
+        if "=>" in out_tz2:
+            tz_val = out_tz2.split("=>")[-1].strip()
+
+    tz_val = tz_val or "UTC"
+    is_mari_standard = tz_val in ("Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura")
+    
+    zone_label = "Belum Dikonfigurasi (UTC/Kosong)"
+    if tz_val == "Asia/Jakarta":
+        zone_label = "WIB — Barat (Asia/Jakarta)"
+    elif tz_val == "Asia/Makassar":
+        zone_label = "WITA — Tengah (Asia/Makassar)"
+    elif tz_val == "Asia/Jayapura":
+        zone_label = "WIT — Timur (Asia/Jayapura)"
+    elif tz_val and tz_val.upper() != "UTC":
+        zone_label = f"Zona Non-Standar ({tz_val})"
+
+    data["timezone_info"] = {
+        "current_timezone": tz_val,
+        "is_configured": tz_val != "" and tz_val.upper() != "UTC",
+        "is_mari_standard": is_mari_standard,
+        "zone_label": zone_label
+    }
+
     # 5. Check Service status
     for srv in ["apache2", "httpd", "nginx", "php-fpm", "php8.3-fpm", "php8.2-fpm", "php8.1-fpm", "php7.4-fpm", "rh-php56-php-fpm"]:
         code, out_srv, _ = execute_cmd(client, f"systemctl is-active {srv} 2>/dev/null")
@@ -482,6 +510,18 @@ def run_harden(client, sudo_pwd=None, options=None):
         sed_disp = f"sudo sed -i -E 's/^[; ]*display_errors[ ]*=.*/display_errors = Off/' {ini}"
         execute_cmd(client, sed_disp, sudo_pwd)
 
+        # 6. Apply date.timezone if chosen from Dropdown (Mahkamah Agung RI Standard)
+        target_tz = (options.get("timezone") or "").strip()
+        if target_tz and target_tz in ("Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura", "UTC"):
+            c_tz, _, _ = execute_cmd(client, f"grep -E '^[; ]*date.timezone' {ini}")
+            if c_tz == 0:
+                sed_tz = f"sudo sed -i -E 's/^[; ]*date.timezone[ ]*=.*/date.timezone = {target_tz}/' {ini}"
+                execute_cmd(client, sed_tz, sudo_pwd)
+            else:
+                append_tz = f"echo 'date.timezone = {target_tz}' | sudo tee -a {ini} >/dev/null"
+                execute_cmd(client, append_tz, sudo_pwd)
+            logs.append(f"    - Diterapkan: date.timezone = {target_tz} (Sesuai Pilihan Wilayah Satker)")
+
         logs.append(f"    - Updated security parameters in {ini}")
 
     # 2. FPM Pool Hardening (php_admin_value) - Ensures settings cannot be overridden by user scripts
@@ -704,6 +744,59 @@ def run_instant_patch(client, sudo_pwd=None, options=None):
     }
 
 
+def connect_ssh(client, hostname, port, username, password=None, pkey=None, timeout=15):
+    """
+    Connects to target SSH server supporting standard password, private key,
+    and automatic fallback to keyboard-interactive authentication (like PuTTY).
+    Explicitly ignores local Windows SSH keys and agent when password is provided.
+    """
+    if pkey:
+        client.connect(
+            hostname=hostname,
+            port=port,
+            username=username,
+            pkey=pkey,
+            look_for_keys=False,
+            allow_agent=False,
+            timeout=timeout,
+            banner_timeout=timeout
+        )
+        return
+
+    # Attempt 1: Standard Password auth with local keys/agent strictly disabled
+    try:
+        client.connect(
+            hostname=hostname,
+            port=port,
+            username=username,
+            password=password,
+            look_for_keys=False,
+            allow_agent=False,
+            timeout=timeout,
+            banner_timeout=timeout
+        )
+        return
+    except (paramiko.ssh_exception.BadAuthenticationType, paramiko.AuthenticationException) as auth_err:
+        # Attempt 2: Fallback to Keyboard-Interactive (PuTTY-style) for OpenSSH PAM
+        try:
+            transport = paramiko.Transport((hostname, port))
+            transport.banner_timeout = timeout
+            transport.start_client(timeout=timeout)
+
+            def interactive_handler(title, instructions, prompt_list):
+                return [password for _ in prompt_list]
+
+            transport.auth_interactive(username, interactive_handler)
+            if transport.is_authenticated():
+                client._transport = transport
+                return
+            else:
+                transport.close()
+                raise auth_err
+        except Exception:
+            raise auth_err
+
+
 def main():
     try:
         raw_input = sys.stdin.read()
@@ -731,29 +824,20 @@ def main():
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    try:
-        connect_kwargs = {
-            "hostname": host,
-            "port": port,
-            "username": user,
-            "timeout": 15,
-            "banner_timeout": 15
-        }
-        if private_key_str:
-            key_file = io.StringIO(private_key_str)
-            try:
-                pkey = paramiko.RSAKey.from_private_key(key_file)
-            except Exception:
-                key_file.seek(0)
-                pkey = paramiko.Ed25519Key.from_private_key(key_file)
-            connect_kwargs["pkey"] = pkey
-        elif password:
-            connect_kwargs["password"] = password
-        else:
-            print(json.dumps({"success": False, "error": "Either password or private_key must be provided."}))
-            return
+    pkey = None
+    if private_key_str:
+        key_file = io.StringIO(private_key_str)
+        try:
+            pkey = paramiko.RSAKey.from_private_key(key_file)
+        except Exception:
+            key_file.seek(0)
+            pkey = paramiko.Ed25519Key.from_private_key(key_file)
+    elif not password:
+        print(json.dumps({"success": False, "error": "Either password or private_key must be provided."}))
+        return
 
-        client.connect(**connect_kwargs)
+    try:
+        connect_ssh(client, host, port, user, password=password, pkey=pkey, timeout=15)
 
         if action == "audit":
             audit_result = run_audit(client, sudo_pwd)
@@ -779,10 +863,12 @@ def main():
         else:
             print(json.dumps({"success": False, "error": f"Unknown action '{action}'"}))
 
-    except paramiko.AuthenticationException:
-        print(json.dumps({"success": False, "error": "SSH Authentication failed. Check username, password or private key."}))
+    except paramiko.AuthenticationException as e:
+        err_str = str(e).strip() or "Kredensial tidak valid atau ditolak oleh server (Periksa Username / Password)."
+        print(json.dumps({"success": False, "error": f"SSH Authentication failed: {err_str}"}))
     except Exception as exc:
-        print(json.dumps({"success": False, "error": f"SSH Connection failed: {exc}"}))
+        err_msg = str(exc).strip() or type(exc).__name__
+        print(json.dumps({"success": False, "error": f"SSH Connection failed: {err_msg}"}))
     finally:
         client.close()
 

@@ -225,6 +225,16 @@ window.SshAuditor = {
             ];
         }
 
+        const tzSelect = document.getElementById('ssh-timezone-select');
+        const selectedTz = (tzSelect && tzSelect.value) ? tzSelect.value : '';
+        if (selectedTz && (type === 'instant' || type === 'harden')) {
+            items.push({
+                step: items.length + 1,
+                title: 'Penyesuaian date.timezone Sesuai Pilihan Dropdown',
+                desc: `Menyetel parameter <code>date.timezone = ${App.escapeHtml(selectedTz)}</code> pada berkas <code>php.ini</code> sesuai zona hukum satker Anda.`
+            });
+        }
+
         if (modalTitle) modalTitle.innerText = title;
         if (modalBadge) modalBadge.innerText = badge;
         if (btnExecLabel) btnExecLabel.innerText = execLabel;
@@ -744,6 +754,18 @@ window.SshAuditor = {
 
         if (condNotes) {
             condNotes.innerHTML = `<strong>Keterangan Advisori:</strong> ${App.escapeHtml(cve11.verdict_reason || 'Pemeriksaan 4 kondisi selesai.')}`;
+        }
+
+        // Date Timezone (Mahkamah Agung RI Compliance)
+        const tzInfo = data.timezone_info || {};
+        const tzEl = document.getElementById('ssh-res-timezone');
+        if (tzEl) {
+            const tz = tzInfo.current_timezone || 'UTC';
+            if (tzInfo.is_mari_standard) {
+                tzEl.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="truncate">${App.escapeHtml(tzInfo.zone_label || tz)}</span></span>`;
+            } else {
+                tzEl.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="truncate">${App.escapeHtml(tzInfo.zone_label || tz)}</span></span>`;
+            }
         }
 
         // Services

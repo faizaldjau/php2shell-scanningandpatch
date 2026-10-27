@@ -257,7 +257,8 @@ function handleSshHarden(): void {
         'sudo_password' => $_POST['sudo_password'] ?? null,
         'options' => [
             'nesting_level' => 16,
-            'disable_upload_progress' => true
+            'disable_upload_progress' => true,
+            'timezone' => $_POST['timezone'] ?? ''
         ]
     ]);
     echo json_encode($result);
@@ -312,7 +313,8 @@ function handleSshInstantPatch(): void {
         'sudo_password' => $_POST['sudo_password'] ?? null,
         'options' => [
             'nesting_level' => 16,
-            'disable_upload_progress' => true
+            'disable_upload_progress' => true,
+            'timezone' => $_POST['timezone'] ?? ''
         ]
     ]);
     echo json_encode($result);
